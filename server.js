@@ -26,7 +26,13 @@ app.use('/api/report', reportRoutes);
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+// EXPORT untuk Vercel (WAJIB!)
+module.exports = app;
 
-app.listen(PORT, () => {
+// Hanya jalankan listen jika bukan di Vercel
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
     console.log(`✅ Server jalan di http://localhost:${PORT}`);
-});
+  });
+}
