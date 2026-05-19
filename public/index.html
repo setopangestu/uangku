@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>UangKu — Keuangan Pribadi</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -22,7 +22,7 @@
             --radius: 16px;
             --t: 0.3s cubic-bezier(0.4,0,0.2,1);
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: var(--bg);
@@ -109,7 +109,7 @@
             width:100%; padding:13px 16px 13px 44px;
             background:var(--input-bg); border:1px solid var(--input-border);
             border-radius:12px; color:var(--text);
-            font-family:inherit; font-size:14px;
+            font-family:inherit; font-size:16px;
             transition:var(--t); outline:none;
         }
         input::placeholder { color:var(--text-muted); }
@@ -142,9 +142,56 @@
         .alert.success { background:rgba(34,211,165,0.12); border:1px solid rgba(34,211,165,0.25); color:var(--success); display:flex; }
 
         @media(max-width:480px) { .card{padding:24px 20px;} }
+
+        /* ===== CROSS-PLATFORM FIXES ===== */
+        @supports (-webkit-touch-callout: none) {
+            .card {
+                backdrop-filter: blur(24px);
+                -webkit-backdrop-filter: blur(24px);
+            }
+            input {
+                font-size: 16px;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+            .btn-submit {
+                -webkit-appearance: none;
+                appearance: none;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .btn-submit:active {
+                transform: scale(0.97);
+            }
+            .tab-btn:active {
+                transform: scale(0.97);
+            }
+        }
+
+        @media screen and (min-width: 1024px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.05);
+                border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: rgba(108,99,255,0.4);
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            input, select, textarea {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- BODY SAMA PERSIS seperti yang kamu punya, tidak diubah -->
     <div class="orbs">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
@@ -223,6 +270,7 @@
     </div>
 
     <script>
+        // SCRIPT SAMA PERSIS seperti yang kamu punya
         const API_URL = '/api';
         if (localStorage.getItem('token')) {
             const u = JSON.parse(localStorage.getItem('user') || '{}');

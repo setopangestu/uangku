@@ -124,6 +124,10 @@
             color: #888;
         }
         
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -184,15 +188,40 @@
             color: #ff5252;
         }
         
-        .total-row {
+        /* Total Row - PASTI MUNCUL */
+        .total-section {
+            margin-top: 20px;
             background: #f0f0f0;
-            font-weight: bold;
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            border: 1px solid #ddd;
         }
         
-        .total-row td {
-            padding: 10px 8px;
-            border-top: 1px solid #ddd;
+        .total-item {
+            text-align: right;
         }
+        
+        .total-item .label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .total-item .value {
+            font-size: 18px;
+            font-weight: 800;
+        }
+        
+        .total-item.income .value { color: #22d3a5; }
+        .total-item.expense .value { color: #ff5252; }
+        .total-item.balance .value { color: #6c63ff; }
         
         .footer {
             margin-top: 30px;
@@ -229,7 +258,7 @@
             background: #5a52d5;
         }
         
-        .download-btn.loading {
+        .download-btn:disabled {
             opacity: 0.7;
             cursor: wait;
         }
@@ -245,6 +274,25 @@
             text-align: center;
             padding: 50px;
             color: #ff5252;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            .download-btn {
+                display: none;
+            }
+            .report-container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .total-section {
+                break-inside: avoid;
+                background: #f0f0f0;
+            }
         }
         
         @media (max-width: 768px) {
@@ -265,6 +313,17 @@
                 padding: 6px 4px;
                 font-size: 10px;
             }
+            .download-btn {
+                bottom: 12px;
+                right: 12px;
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+            .total-section {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 12px;
+            }
         }
     </style>
 </head>
@@ -278,13 +337,25 @@
     </button>
 
     <script>
-        const API_URL = '/api';  // BUKAN localhost
+        const API_URL = '/api';
         
         const urlParams = new URLSearchParams(window.location.search);
         const startDate = urlParams.get('startDate');
         const endDate = urlParams.get('endDate');
-        
-        let currentTransactions = [];
+
+        // ========== FUNGSI FILTER TANGGAL YANG AKURAT ==========
+        function getLocalDateStr(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('sv');
+        }
+
+        function filterByDate(transactions) {
+            if (!startDate || !endDate) return transactions;
+            return transactions.filter(t => {
+                const txDate = getLocalDateStr(t.created_at);
+                return txDate >= startDate && txDate <= endDate;
+            });
+        }
         
         async function loadReport() {
             const token = localStorage.getItem('token');
@@ -300,16 +371,8 @@
                 
                 if (!res.ok) throw new Error('Gagal memuat data');
                 
-                let transactions = await res.json();
-                currentTransactions = transactions;
-                
-                if (startDate && endDate) {
-                    transactions = transactions.filter(t => {
-                        const txDate = new Date(t.created_at).toISOString().split('T')[0];
-                        return txDate >= startDate && txDate <= endDate;
-                    });
-                }
-                
+                const allTransactions = await res.json();
+                const transactions = filterByDate(allTransactions);
                 renderReport(transactions);
                 
             } catch (error) {
@@ -348,35 +411,57 @@
             const balance = totalIncome - totalExpense;
             
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const userName = user.email || 'Pengguna';
+            const userName = user.name || user.email || 'Pengguna';
             
             let periodeText = 'Semua Transaksi';
             if (startDate && endDate) {
-                periodeText = `${formatTanggalLong(startDate)} - ${formatTanggalLong(endDate)}`;
+                periodeText = `${formatTanggalLong(startDate)} – ${formatTanggalLong(endDate)}`;
             }
             
             const printDate = formatTanggalLong(new Date());
             
             let tableRows = '';
-            transactions.forEach((t, idx) => {
-                const isIncome = t.type === 'income';
-                tableRows += `
-                    <tr>
-                        <td class="text-center">${idx + 1}</td>
-                        <td>${formatTanggal(t.created_at)}</td>
-                        <td>
-                            <span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">
-                                ${isIncome ? 'Masuk' : 'Keluar'}
-                            </span>
-                         </td>
-                        <td>${t.category || '-'}</td>
-                        <td>${t.description || '-'}</td>
-                        <td class="text-right ${isIncome ? 'amount-income' : 'amount-expense'}">
-                            ${isIncome ? '+' : '-'} ${formatRupiah(t.amount)}
-                         </td>
-                     </tr>
-                `;
-            });
+            if (transactions.length === 0) {
+                tableRows = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#888;">📭 Belum ada transaksi pada periode ini<\/td><\/tr>';
+            } else {
+                transactions.forEach((t, idx) => {
+                    const isIncome = t.type === 'income';
+                    tableRows += `
+                        <tr>
+                            <td class="text-center">${idx + 1}<\/td>
+                            <td>${formatTanggal(t.created_at)}<\/td>
+                            <td>
+                                <span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">
+                                    ${isIncome ? 'Masuk' : 'Keluar'}
+                                <\/span>
+                            <\/td>
+                            <td>${t.category || '-'}<\/td>
+                            <td>${t.description || '-'}<\/td>
+                            <td class="text-right ${isIncome ? 'amount-income' : 'amount-expense'}">
+                                ${isIncome ? '+' : '-'} ${formatRupiah(t.amount)}
+                            <\/td>
+                        <\/tr>
+                    `;
+                });
+            }
+            
+            // TOTAL SECTION - DIPISAH DENGAN MARKER YANG JELAS
+            const totalSection = `
+                <div class="total-section" id="totalSection">
+                    <div class="total-item income">
+                        <div class="label">TOTAL PEMASUKAN</div>
+                        <div class="value">+ ${formatRupiah(totalIncome)}</div>
+                    </div>
+                    <div class="total-item expense">
+                        <div class="label">TOTAL PENGELUARAN</div>
+                        <div class="value">- ${formatRupiah(totalExpense)}</div>
+                    </div>
+                    <div class="total-item balance">
+                        <div class="label">SALDO BERSIH</div>
+                        <div class="value">${formatRupiah(balance)}</div>
+                    </div>
+                </div>
+            `;
             
             const html = `
                 <div class="header">
@@ -409,29 +494,25 @@
                     <span>${transactions.length} transaksi</span>
                 </div>
                 
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px">No</th>
-                            <th style="width:85px">Tanggal</th>
-                            <th style="width:70px">Tipe</th>
-                            <th style="width:100px">Kategori</th>
-                            <th>Deskripsi</th>
-                            <th style="width:110px">Nominal</th>
-                         </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows || '<tr><td colspan="6" style="text-align:center; padding:40px;">Belum ada transaksi</td></tr>'}
-                        <tr class="total-row">
-                            <td colspan="5" class="text-right"><strong>TOTAL</strong></td>
-                            <td class="text-right">
-                                <div class="amount-income">+ ${formatRupiah(totalIncome)}</div>
-                                <div class="amount-expense">- ${formatRupiah(totalExpense)}</div>
-                                <strong>${formatRupiah(balance)}</strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px">No</th>
+                                <th style="width:85px">Tanggal</th>
+                                <th style="width:70px">Tipe</th>
+                                <th style="width:100px">Kategori</th>
+                                <th>Deskripsi</th>
+                                <th style="width:110px" class="text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+                
+                ${totalSection}
                 
                 <div class="footer">
                     Laporan ini dibuat secara otomatis oleh UangKu • Aplikasi Keuangan Pribadi
@@ -439,6 +520,12 @@
             `;
             
             document.getElementById('reportContainer').innerHTML = html;
+            
+            // Pastikan total section terlihat sebelum PDF di-generate
+            const totalSectionElem = document.getElementById('totalSection');
+            if (totalSectionElem) {
+                totalSectionElem.style.display = 'flex';
+            }
         }
         
         async function downloadPDF() {
@@ -447,35 +534,44 @@
             
             if (!element) return;
             
-            // Tampilkan loading
             const originalText = btn.innerHTML;
             btn.innerHTML = '⏳ Generating PDF...';
-            btn.classList.add('loading');
             btn.disabled = true;
+            
+            // Force reflow untuk memastikan semua element ter-render
+            element.style.opacity = '0.99';
+            setTimeout(() => { element.style.opacity = '1'; }, 10);
+            
+            const dateTag = startDate && endDate
+                ? `${startDate}_sd_${endDate}`
+                : 'semua_transaksi';
             
             const opt = {
                 margin: [0.5, 0.5, 0.5, 0.5],
-                filename: `laporan_keuangan_${Date.now()}.pdf`,
+                filename: `laporan_uangku_${dateTag}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, letterRendering: true, useCORS: true, logging: false },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    letterRendering: true
+                },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
             try {
+                await new Promise(r => setTimeout(r, 500)); // Delay 500ms
                 await html2pdf().set(opt).from(element).save();
             } catch (error) {
                 console.error('PDF generation error:', error);
                 alert('Gagal membuat PDF. Coba lagi.');
             } finally {
                 btn.innerHTML = originalText;
-                btn.classList.remove('loading');
                 btn.disabled = false;
             }
         }
         
-        // Tambah event listener ke tombol download
         document.getElementById('downloadBtn').addEventListener('click', downloadPDF);
-        
         loadReport();
     </script>
 </body>

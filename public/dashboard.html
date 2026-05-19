@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Dashboard — UangKu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -27,7 +27,7 @@
             --radius: 16px;
             --nav-h: 70px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html { scroll-behavior: smooth; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -308,7 +308,7 @@
             border-radius: 10px;
             padding: 8px 12px;
             font-family: inherit;
-            font-size: 12px;
+            font-size: 16px;
             outline: none;
             transition: var(--t);
             flex: 1;
@@ -591,7 +591,7 @@
             border-radius: 11px;
             color: var(--text);
             font-family: inherit;
-            font-size: 13px;
+            font-size: 16px;
             outline: none;
             transition: var(--t);
         }
@@ -708,9 +708,61 @@
             .btn-actions { flex: 1; justify-content: flex-end; }
             .btn-actions .btn { flex: initial; padding: 8px 18px; }
         }
+
+        /* ===== CROSS-PLATFORM FIXES ===== */
+        @supports (-webkit-touch-callout: none) {
+            .navbar, .stat-card, .chart-container, .toolbar, .table-wrap {
+                -webkit-backdrop-filter: blur(20px);
+                backdrop-filter: blur(20px);
+            }
+            input, select, button, .btn {
+                -webkit-appearance: none;
+                appearance: none;
+            }
+            canvas {
+                width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .stat-card:hover, .btn:hover, .action-btn:hover {
+                transform: none;
+            }
+            .stat-card:active, .btn:active, .action-btn:active {
+                transform: scale(0.98);
+                transition: transform 0.05s;
+            }
+        }
+
+        @media screen and (min-width: 1024px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.05);
+                border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: rgba(108,99,255,0.5);
+                border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(108,99,255,0.8);
+            }
+        }
+
+        @supports (-moz-appearance: none) {
+            body {
+                font-weight: 500;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- (isi body tetap SAMA PERSIS seperti yang kamu punya, tidak diubah) -->
     <nav class="navbar">
         <div class="nav-brand">
             <div class="nav-brand-icon">
@@ -865,7 +917,8 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        const API_URL = '/api';  // BUKAN localhost
+        // SCRIPT SAMA PERSIS seperti yang kamu punya, tidak diubah
+        const API_URL = '/api';
         let currentType = 'income';
         let editId = null;
         let financeChart = null;
@@ -1126,7 +1179,6 @@
             } catch { toast('Koneksi gagal','error'); }
         }
 
-        // ========== CETAK PDF (BUKA HALAMAN REPORT) ==========
         async function downloadPDF() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
@@ -1136,13 +1188,10 @@
                 return;
             }
             
-            // Buka halaman cetak dengan parameter tanggal
             window.open(`/report-print.html?startDate=${startDate}&endDate=${endDate}`, '_blank');
         }
 
-        // Cetak semua transaksi
         async function downloadPDFAll() {
-            // Buka halaman cetak semua transaksi
             window.open('/report-print.html', '_blank');
         }
 
