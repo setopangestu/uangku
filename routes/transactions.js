@@ -5,7 +5,7 @@ const router = express.Router();
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
+    process.env.SUPABASE_ANON_KEY
 );
 
 router.post('/', authenticate, async (req, res) => {

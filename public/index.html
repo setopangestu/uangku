@@ -223,7 +223,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = '/api';
         if (localStorage.getItem('token')) {
             const u = JSON.parse(localStorage.getItem('user') || '{}');
             window.location.href = u.is_admin ? '/admin/' : '/dashboard.html';
