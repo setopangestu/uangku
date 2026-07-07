@@ -141,57 +141,58 @@
         .alert.error { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:#ff8080; display:flex; }
         .alert.success { background:rgba(34,211,165,0.12); border:1px solid rgba(34,211,165,0.25); color:var(--success); display:flex; }
 
+        .forgot-link {
+            display:block;
+            text-align:center;
+            margin-top:14px;
+            color:var(--text-muted);
+            font-size:13px;
+            text-decoration:none;
+            transition:var(--t);
+            cursor:pointer;
+        }
+        .forgot-link:hover {
+            color:var(--primary);
+        }
+        .back-link {
+            display:block;
+            text-align:center;
+            margin-top:12px;
+            color:var(--text-muted);
+            font-size:13px;
+            text-decoration:none;
+            transition:var(--t);
+            cursor:pointer;
+        }
+        .back-link:hover {
+            color:var(--primary);
+        }
+
         @media(max-width:480px) { .card{padding:24px 20px;} }
 
-        /* ===== CROSS-PLATFORM FIXES ===== */
         @supports (-webkit-touch-callout: none) {
-            .card {
-                backdrop-filter: blur(24px);
-                -webkit-backdrop-filter: blur(24px);
-            }
-            input {
-                font-size: 16px;
-                -webkit-appearance: none;
-                appearance: none;
-            }
-            .btn-submit {
-                -webkit-appearance: none;
-                appearance: none;
-            }
+            .card { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+            input { font-size: 16px; -webkit-appearance: none; appearance: none; }
+            .btn-submit { -webkit-appearance: none; appearance: none; }
         }
 
         @media (hover: none) and (pointer: coarse) {
-            .btn-submit:active {
-                transform: scale(0.97);
-            }
-            .tab-btn:active {
-                transform: scale(0.97);
-            }
+            .btn-submit:active { transform: scale(0.97); }
+            .tab-btn:active { transform: scale(0.97); }
         }
 
         @media screen and (min-width: 1024px) {
-            ::-webkit-scrollbar {
-                width: 6px;
-            }
-            ::-webkit-scrollbar-track {
-                background: rgba(255,255,255,0.05);
-                border-radius: 10px;
-            }
-            ::-webkit-scrollbar-thumb {
-                background: rgba(108,99,255,0.4);
-                border-radius: 10px;
-            }
+            ::-webkit-scrollbar { width: 6px; }
+            ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+            ::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.4); border-radius: 10px; }
         }
 
         @media (max-width: 480px) {
-            input, select, textarea {
-                font-size: 16px;
-            }
+            input, select, textarea { font-size: 16px; }
         }
     </style>
 </head>
 <body>
-    <!-- BODY SAMA PERSIS seperti yang kamu punya, tidak diubah -->
     <div class="orbs">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
@@ -213,8 +214,10 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="showTab('login')">Masuk</button>
                 <button class="tab-btn" onclick="showTab('register')">Daftar</button>
+                <button class="tab-btn" onclick="showTab('reset')">Reset</button>
             </div>
 
+            <!-- Login Form -->
             <div id="login-form" class="form active">
                 <div id="login-alert" class="alert"></div>
                 <div class="input-group">
@@ -232,8 +235,10 @@
                     </div>
                 </div>
                 <button class="btn-submit" id="loginBtn" onclick="login()">Masuk ke Akun</button>
+                <a class="forgot-link" onclick="showTab('reset')">Lupa Password?</a>
             </div>
 
+            <!-- Register Form -->
             <div id="register-form" class="form">
                 <div id="register-alert" class="alert"></div>
                 <div class="input-group">
@@ -266,60 +271,186 @@
                 </div>
                 <button class="btn-submit" id="registerBtn" onclick="register()">Buat Akun Gratis</button>
             </div>
+
+            <!-- Reset Password Form -->
+            <div id="reset-form" class="form">
+                <div id="reset-alert" class="alert"></div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="reset-email" placeholder="nama@email.com">
+                    </div>
+                </div>
+                <button class="btn-submit" id="resetBtn" onclick="resetPassword()">Kirim Link Reset</button>
+                <a class="back-link" onclick="showTab('login')">← Kembali ke Login</a>
+            </div>
         </div>
     </div>
 
     <script>
-        // SCRIPT SAMA PERSIS seperti yang kamu punya
         const API_URL = '/api';
+        
         if (localStorage.getItem('token')) {
             const u = JSON.parse(localStorage.getItem('user') || '{}');
             window.location.href = u.is_admin ? '/admin/' : '/dashboard.html';
         }
+
         function showTab(tab) {
-            document.getElementById('login-form').classList.toggle('active', tab==='login');
-            document.getElementById('register-form').classList.toggle('active', tab==='register');
-            document.querySelectorAll('.tab-btn')[0].classList.toggle('active', tab==='login');
-            document.querySelectorAll('.tab-btn')[1].classList.toggle('active', tab==='register');
+            document.getElementById('login-form').classList.toggle('active', tab === 'login');
+            document.getElementById('register-form').classList.toggle('active', tab === 'register');
+            document.getElementById('reset-form').classList.toggle('active', tab === 'reset');
+            document.querySelectorAll('.tab-btn')[0].classList.toggle('active', tab === 'login');
+            document.querySelectorAll('.tab-btn')[1].classList.toggle('active', tab === 'register');
+            document.querySelectorAll('.tab-btn')[2].classList.toggle('active', tab === 'reset');
         }
+
         function showAlert(id, type, msg) {
             const el = document.getElementById(id);
             el.className = `alert ${type}`;
-            el.innerHTML = (type==='error'?'⚠️ ':'✅ ') + msg;
+            el.innerHTML = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
         }
+
         async function login() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
-            document.getElementById('login-alert').className='alert';
-            if (!email||!password){showAlert('login-alert','error','Email dan password wajib diisi');return;}
-            const btn=document.getElementById('loginBtn');
-            btn.textContent='Memproses...'; btn.classList.add('loading');
+            document.getElementById('login-alert').className = 'alert';
+            
+            if (!email || !password) {
+                showAlert('login-alert', 'error', 'Email dan password wajib diisi');
+                return;
+            }
+            
+            const btn = document.getElementById('loginBtn');
+            btn.textContent = 'Memproses...';
+            btn.classList.add('loading');
+            
             try {
-                const res = await fetch(`${API_URL}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
                 const data = await res.json();
-                if(res.ok){
-                    localStorage.setItem('token',data.token);
-                    localStorage.setItem('user',JSON.stringify(data.user));
-                    btn.textContent='✅ Berhasil!';
-                    setTimeout(()=>{ window.location.href=data.user.is_admin?'/admin/':'/dashboard.html'; },500);
-                } else { showAlert('login-alert','error',data.error||'Login gagal'); btn.textContent='Masuk ke Akun'; btn.classList.remove('loading'); }
-            } catch { showAlert('login-alert','error','Koneksi gagal'); btn.textContent='Masuk ke Akun'; btn.classList.remove('loading'); }
+                
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    btn.textContent = '✅ Berhasil!';
+                    setTimeout(() => {
+                        window.location.href = data.user.is_admin ? '/admin/' : '/dashboard.html';
+                    }, 500);
+                } else {
+                    showAlert('login-alert', 'error', data.error || 'Login gagal');
+                    btn.textContent = 'Masuk ke Akun';
+                    btn.classList.remove('loading');
+                }
+            } catch {
+                showAlert('login-alert', 'error', 'Koneksi gagal');
+                btn.textContent = 'Masuk ke Akun';
+                btn.classList.remove('loading');
+            }
         }
+
         async function register() {
-            const name=document.getElementById('reg-name').value.trim(), email=document.getElementById('reg-email').value.trim(), password=document.getElementById('reg-password').value, phone=document.getElementById('reg-phone').value.trim();
-            document.getElementById('register-alert').className='alert';
-            if(!email||!password){showAlert('register-alert','error','Email dan password wajib diisi');return;}
-            if(password.length<6){showAlert('register-alert','error','Password minimal 6 karakter');return;}
-            const btn=document.getElementById('registerBtn'); btn.textContent='Mendaftarkan...'; btn.classList.add('loading');
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const phone = document.getElementById('reg-phone').value.trim();
+            
+            document.getElementById('register-alert').className = 'alert';
+            
+            if (!email || !password) {
+                showAlert('register-alert', 'error', 'Email dan password wajib diisi');
+                return;
+            }
+            if (password.length < 6) {
+                showAlert('register-alert', 'error', 'Password minimal 6 karakter');
+                return;
+            }
+            
+            const btn = document.getElementById('registerBtn');
+            btn.textContent = 'Mendaftarkan...';
+            btn.classList.add('loading');
+            
             try {
-                const res=await fetch(`${API_URL}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password,phone})});
-                const data=await res.json();
-                if(res.ok){ showAlert('register-alert','success','Akun berhasil dibuat! Silakan login.'); setTimeout(()=>showTab('login'),2200); }
-                else showAlert('register-alert','error',data.error||'Pendaftaran gagal');
-            } catch { showAlert('register-alert','error','Koneksi gagal'); }
-            btn.textContent='Buat Akun Gratis'; btn.classList.remove('loading');
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, phone })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showAlert('register-alert', 'success', 'Akun berhasil dibuat! Silakan login.');
+                    setTimeout(() => showTab('login'), 2200);
+                } else {
+                    showAlert('register-alert', 'error', data.error || 'Pendaftaran gagal');
+                }
+            } catch {
+                showAlert('register-alert', 'error', 'Koneksi gagal');
+            }
+            
+            btn.textContent = 'Buat Akun Gratis';
+            btn.classList.remove('loading');
         }
-        document.addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(document.getElementById('login-form').classList.contains('active')) login(); else register(); } });
+
+        async function resetPassword() {
+            const email = document.getElementById('reset-email').value.trim();
+            const alertEl = document.getElementById('reset-alert');
+            const btn = document.getElementById('resetBtn');
+            
+            alertEl.className = 'alert';
+            
+            if (!email) {
+                alertEl.className = 'alert error';
+                alertEl.innerHTML = '⚠️ Email wajib diisi';
+                return;
+            }
+            
+            btn.textContent = 'Mengirim...';
+            btn.classList.add('loading');
+            
+            try {
+                const res = await fetch(`${API_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alertEl.className = 'alert success';
+                    alertEl.innerHTML = '✅ Link reset password telah dikirim ke email Anda. Cek inbox/spam!';
+                    btn.textContent = 'Kirim Link Reset';
+                    btn.classList.remove('loading');
+                    document.getElementById('reset-email').value = '';
+                } else {
+                    alertEl.className = 'alert error';
+                    alertEl.innerHTML = '⚠️ ' + (data.error || 'Gagal mengirim link reset');
+                    btn.textContent = 'Kirim Link Reset';
+                    btn.classList.remove('loading');
+                }
+            } catch (error) {
+                alertEl.className = 'alert error';
+                alertEl.innerHTML = '⚠️ Koneksi gagal. Coba lagi.';
+                btn.textContent = 'Kirim Link Reset';
+                btn.classList.remove('loading');
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (document.getElementById('login-form').classList.contains('active')) {
+                    login();
+                } else if (document.getElementById('register-form').classList.contains('active')) {
+                    register();
+                } else if (document.getElementById('reset-form').classList.contains('active')) {
+                    resetPassword();
+                }
+            }
+        });
     </script>
 </body>
 </html>
