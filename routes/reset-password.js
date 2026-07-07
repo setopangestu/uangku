@@ -15,8 +15,8 @@ router.post('/reset-password', async (req, res) => {
         return res.status(400).json({ error: 'Email wajib diisi' });
     }
     
-    // Redirect ke halaman reset password (bisa pakai URL Vercel)
-    const redirectTo = process.env.CLIENT_URL || 'https://uangku.vercel.app';
+    // Redirect ke halaman reset password
+    const redirectTo = process.env.CLIENT_URL || 'https://uangku-one.vercel.app';
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${redirectTo}/reset-password.html`

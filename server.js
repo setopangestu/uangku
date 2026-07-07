@@ -19,13 +19,13 @@ const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const adminRoutes = require('./routes/admin');
 const reportRoutes = require('./routes/report');
-const resetPasswordRoutes = require('./routes/reset-password'); // <-- TAMBAHKAN INI
+const resetPasswordRoutes = require('./routes/reset-password');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/report', reportRoutes);
-app.use('/api/auth', resetPasswordRoutes); // <-- TAMBAHKAN INI (route reset password)
+app.use('/api/auth', resetPasswordRoutes);
 
 // Root route
 app.get('/', (req, res) => {
